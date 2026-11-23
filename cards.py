@@ -1,25 +1,25 @@
-import enum
+from enum import Enum
 import random
 
-class Suit(enum):
-    SPADE=0, 
-    CLUB=1, 
-    HEART=2, 
+class Suit(Enum):
+    SPADE=0
+    CLUB=1
+    HEART=2
     DIAMOND=3
 
-class Rank(enum):
-    ACE=14,
-    KING=13,
-    QUEEN=12,
-    JACK=11,
-    TEN=10,
-    NINE=9,
-    EIGHT=8,
-    SEVEN=7,
-    SIX=6,
-    FIVE=5,
-    FOUR=4,
-    THREE=3,
+class Rank(Enum):
+    ACE=14
+    KING=13
+    QUEEN=12
+    JACK=11
+    TEN=10
+    NINE=9
+    EIGHT=8
+    SEVEN=7
+    SIX=6
+    FIVE=5
+    FOUR=4
+    THREE=3
     TWO=2
 
 
@@ -31,11 +31,11 @@ class Card:
 
     @staticmethod
     def random_rank():
-        pass
+        return random.choice(Rank)
 
     @staticmethod
     def random_suit():
-        pass
+        return random.choice(Suit)
     
     def __init__(self, rank=None, suit=None):
         if rank:
@@ -89,7 +89,7 @@ class Deck:
 
 class Table:
 
-    def __init__(self, cards):
+    def __init__(self):
         self.player = []
         self.board = []
         self.opponents = []
@@ -122,5 +122,9 @@ class Table:
         
         
        
+def main():
+    pass
 
+if __name__ == "__main__":
+    main()
         

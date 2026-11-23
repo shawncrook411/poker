@@ -31,11 +31,15 @@ class Card:
 
     @staticmethod
     def random_rank():
-        return random.choice(Rank)
+        return random.choice(list(Rank))
 
     @staticmethod
     def random_suit():
-        return random.choice(Suit)
+        return random.choice(list(Suit))
+
+    @staticmethod
+    def sort(cards: list[Card]):
+        return sorted(cards, reverse=True)
     
     def __init__(self, rank=None, suit=None):
         if rank:
@@ -48,11 +52,19 @@ class Card:
         else:
             self.suit = Card.random_suit()
 
-    def __str__(self):
-        return self.suit + self.rank
+    
 
-    def __eq__(self, other):
-        return self.rank == other.rank
+    def __str__(self):
+        return f"{self.rank.name}  {self.suit.name}"
+
+    def __eq__(self, other: Card):
+        return self.rank.value == other.rank.value and self.suit == other.suit
+
+    def __lt__(self, other: Card):
+        return self.rank.value < other.rank.value
+
+    def __gt__(self, other: Card):
+        return self.rank.value > other.rank.value
 
     def __hash__(self):
         return hash((self.rank, self.suit))
@@ -60,21 +72,29 @@ class Card:
     
 class Deck:
 
-    def __init__(self, exclude=()):
+    def __init__(self, shuffle=True, exclude: list[Card] = [] ):
         self.cards = []
 
         for rank in Rank:
             for suit in Suit:
 
                 card = Card(rank, suit)
+
                 if card not in exclude:
                     self.cards.append(card)
+
+        if shuffle:
+            self.shuffle()
 
     def shuffle(self):
         random.shuffle(self.cards)
 
     def deal(self, n):
-        dealt = random.sample(self.cards, n)
+        try:
+            dealt = random.sample(self.cards, n)
+
+        except ValueError:
+            dealt = random.sample(self.cards, len(self.cards))
 
         for c in dealt:
             self.cards.remove(c)
@@ -85,20 +105,39 @@ class Deck:
         return len(self.cards)
 
 
+class Player:
+    def __init__(self, hand):
+        self.hand : list[Card] = hand
 
+    def __str__(self):
+        str = ""
+
+        for c in self.hand:
+            str += f"{c} "
+
+        return str
 
 class Table:
 
     def __init__(self):
-        self.player = []
+        deck = Deck()
+
+        self.player = Player(deck.deal(2))
         self.board = []
-        self.opponents = []
+        self.opponents : list[Player] = []
+
+        for _ in range(5):
+            self.opponents.append(
+                Player(deck.deal(2))
+            )
 
     def known_cards(self):
-        cards = list(self.player) + list(self.board)
 
-        for hand in self.opponents:
-            cards += hand
+        cards = self.player.hand + list(self.board)
+
+        for player in self.opponents:
+            for card in player.hand:
+                cards.append(card)
 
         return cards
 
@@ -106,24 +145,31 @@ class Table:
         return Deck(exclude=self.known_cards())
 
     def show(self):
-        print(f" Table\n" )
+        print(f"\tTable\n" )
 
-        print(f" Player: {self.player}\n")
+        print(f"\tPlayer: {self.player}\n")
 
-        print(f" Board:  {self.board}\n")
+        print(f"\tBoard:  {self.board}\n")
 
         for i, hand in enumerate(self.opponents, 1):
-            print(f"Opponent {i}: {hand}")
+            print(f"\tOpponent #{i}: {hand}")
 
         if not self.opponents:
-            print(f"No Opponents")
+            print(f"\tNo Opponents")
 
         print(f"Unseen cards: {len(self.remaining())}")
+
         
         
        
 def main():
-    pass
+
+    table = Table()
+
+    table.show()
+
+    for c in table.known_cards():
+        print(c)
 
 if __name__ == "__main__":
     main()

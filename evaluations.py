@@ -91,7 +91,7 @@ def evaluate(cards: list[Card]):
     kinds: list[int] 
     ranks, kinds = get_groups(cards)
 
-    if is_straight(cards) and is_flush:
+    if is_straight(cards) and is_flush():
         return (HandType.STRAIGHT_FLUSH, [high])
 
     if is_four_kind(kinds):

@@ -119,17 +119,26 @@ class Player:
 
 class Table:
 
-    def __init__(self):
-        deck = Deck()
+    def __init__(self, playerHand=None):
 
-        self.player = Player(deck.deal(2))
-        self.board = []
+        self.board : list[Card] = []
         self.opponents : list[Player] = []
 
-        for _ in range(5):
-            self.opponents.append(
-                Player(deck.deal(2))
-            )
+        if playerHand:
+
+            if len(set(playerHand)) != 2:
+                raise TypeError
+
+            for card in playerHand:
+                if not isinstance(card, Card):
+                    raise TypeError
+
+            self.player = Player(playerHand)
+            deck = Deck(exclude=playerHand)
+
+        else:
+            deck = Deck()
+            self.player = Player(deck.deal(2))
 
     def known_cards(self):
 

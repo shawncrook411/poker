@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import IntEnum
 from itertools import combinations
 
 from cards import *
 
-class HandType(Enum):
+class HandType(IntEnum):
     STRAIGHT_FLUSH=8
     FOUR_KIND=7
     FULL_HOUSE=6
@@ -14,138 +14,182 @@ class HandType(Enum):
     PAIR=1
     HIGH=0
 
-    def __eq__(self, other: HandType):
-        return self.value == other.value
+    @property
+    def label(self) -> str:
+        return HAND_LABELS[self]
 
-    def __lt__(self, other: HandType):
-        return self.value < other.value
-
-    def __gt__(self, other: HandType):
-        return self.value > other.value
-
-
-def is_straight(cards : list[Card]):
-    cards = Card.sort(cards)
-
-    for i, card in enumerate(cards):
-        if i < len(cards) - 1:
-            next = cards[i + 1]
-
-            # Special Edge Case : Ace, 2, 3, 4, 5
-            if i == 0 and card.rank.value == 14 and next.rank.value == 5:
-                continue
-
-            if card.rank.value != next.rank.value + 1:
-                return False
-
-    return True
-
-def is_flush(cards: list[Card]):
-
-    suit = cards[0].suit
-
-    for curr in cards:
-        if curr.suit != suit:
-            return False
-
-    return True
+HAND_LABELS = {
+    HandType.STRAIGHT_FLUSH: "Straight Flush",
+    HandType.FOUR_KIND: "Four of a Kind",
+    HandType.FULL_HOUSE: "Full House",
+    HandType.FLUSH: "Flush",
+    HandType.STRAIGHT: "Straight",
+    HandType.THREE_KIND: "Three of a Kind",
+    HandType.TWO_PAIR: "Two Pair",
+    HandType.PAIR: "Pair",
+    HandType.HIGH: "High Card",
+}    
 
 def get_groups(cards: list[Card]):
-    cards = Card.sort(cards)
-
     counts = {}
 
-    for c in cards:
-        counts[c.rank.value] = counts.get(c.rank.value, 0) + 1
+    for card in cards:
+        counts[card.rank] = counts.get(card.rank, 0) + 1
 
     groups = sorted(counts.items(), key=lambda x: (x[1], x[0]), reverse=True)
+
     ranks = [rank for rank, kind in groups]
     kinds = [kind for rank, kind in groups]
 
     return (ranks, kinds)
 
+def is_straight_flush(cards: list[Card]):
+
+    suits = {}
+    suits.setdefault(0)
+
+    for suit in Suit:
+        suited = [card for card in cards if card.suit == suit]
+        
+        if len(suited) >= 5:
+            return is_straight(suited)
+    
+    return None
 
 
-def is_four_kind(kinds: list[int]):
-    return kinds == [4, 1]
+def is_straight(cards : list[Card]):
 
-def is_full_house(kinds: list[int]):
-    return kinds == [3, 2]
+    unique = sorted(set([card.rank.value for card in cards]), reverse=True)
 
-def is_three_kind(kinds: list[int]):
-    return kinds == [3, 1, 1]
+    if unique[0] == 14:
+        unique.append(1)
 
-def is_two_pair(kinds: list[int]):
-    return kinds == [2, 2, 1]
+    run = 1
 
-def is_pair(kinds: list[int]):
-    return kinds == [2, 1, 1, 1]
+    for i in range(len(unique) - 1):
+        if unique[i] == unique[i+1] + 1:
+
+            run += 1
+
+            if run == 5:
+                return [unique[i-4]]
+            
+        else:
+            run = 1
+
+    return None
+
+def is_flush(cards: list[Card]):
+
+    suits = {}
+    suits.setdefault(0)
+
+    for suit in Suit:
+        suited = [card.rank for card in cards if card.suit == suit]
+        
+        if len(suited) >= 5:
+            return sorted(suited, reverse=True)[:5]
+    
+    return None
+
+
+def is_four_kind(cards: list[Card]):
+    ranks, kinds = get_groups(cards)
+
+    if kinds[0] == 4:
+        return [ranks[0], max(ranks[1:])]
+
+    return None
+
+def is_full_house(cards: list[Card]):
+    ranks, kinds = get_groups(cards)
+
+    if kinds[0] == 3 and kinds[1] >= 2:
+        return [ranks[0], ranks[1]]
+    
+    return None
+
+def is_three_kind(cards: list[Card]):
+    ranks, kinds = get_groups(cards)
+
+    if kinds[0] == 3:
+        return ranks[:3]
+    
+    return None
+
+def is_two_pair(cards: list[Card]):
+    ranks, kinds = get_groups(cards)
+
+    if kinds[0] == 2 and kinds[1] == 2:
+        return [ranks[0], ranks[1], max(ranks[2:])]
+
+    return None
+    
+
+def is_pair(cards: list[Card]):
+    ranks, kinds = get_groups(cards)
+
+    if kinds[0] == 2:
+        return ranks[:4]
+
+    return None
 
 
 def evaluate(cards: list[Card]):
-    values: list[Card] = sorted(cards, reverse=True)
 
-    high: Card = values[0]
+    if result := is_straight_flush(cards):
+        return (HandType.STRAIGHT_FLUSH, result)
+    
+    if result := is_four_kind(cards):
+        return (HandType.FOUR_KIND, result)
+    
+    if result := is_full_house(cards):
+        return (HandType.FULL_HOUSE, result)
+    
+    if result := is_flush(cards):
+        return (HandType.FLUSH, result)
+    
+    if result := is_straight(cards):
+        return (HandType.STRAIGHT, result)
+    
+    if result := is_three_kind(cards):
+        return (HandType.THREE_KIND, result)
+    
+    if result := is_two_pair(cards):
+        return (HandType.TWO_PAIR, result)
+    
+    if result := is_pair(cards):
+        return (HandType.PAIR, result)
 
-    ranks: list[Rank.value]
-    kinds: list[int] 
     ranks, kinds = get_groups(cards)
 
-    if is_straight(cards) and is_flush():
-        return (HandType.STRAIGHT_FLUSH, [high])
-
-    if is_four_kind(kinds):
-        return (HandType.FOUR_KIND, ranks)
-
-    if is_full_house(kinds):
-        return (HandType.FULL_HOUSE, ranks)
-
-    if is_flush(cards):
-        return (HandType.FLUSH, ranks)
-
-    if is_straight(cards):
-        if high.rank == Rank.ACE and cards[1].rank == 5:
-            return (HandType.STRAIGHT, [cards[1]])
-        return (HandType.STRAIGHT, [high])
-
-    if is_three_kind(kinds):
-        return (HandType.THREE_KIND, ranks)
-
-    if is_two_pair(kinds):
-        return (HandType.TWO_PAIR, ranks)
-
-    if is_pair(kinds):
-        return (HandType.PAIR, ranks)
-
-    return (HandType.HIGH, ranks)
-
-def best_hand(cards):
-    best = None
-
-    for five in combinations(cards, 5):
-        score = evaluate(five)
-
-        if best is None or score > best:
-            best = score
-
-    return best
-
+    return (HandType.HIGH, ranks[:5])
 
 
 def main():
 
-
-    deck = Deck()
-    cards = Card.sort(deck.deal(52))
-
-    eval = best_hand(cards)
-
-    print(eval)
-
-
-
+    hand_types = []
     
 
+    while True:
+    
+        deck = Deck()
+        cards = Card.sort(deck.deal(7))
+
+        hand_type, sort = evaluate(cards)
+
+        if hand_type not in hand_types:
+            hand_types.append(hand_type)
+
+            print(f"Hand Type: {HandType(hand_type)}")
+
+            for card in cards:
+                print(f"Card: {card}")
+
+            print("-----")
+
+        if len(hand_types) >= 9:
+            break
 
 
 if __name__ == "__main__":

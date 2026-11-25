@@ -1,13 +1,13 @@
-from enum import Enum
+from enum import IntEnum
 import random
 
-class Suit(Enum):
+class Suit(IntEnum):
     SPADE=0
     CLUB=1
     HEART=2
     DIAMOND=3
 
-class Rank(Enum):
+class Rank(IntEnum):
     ACE=14
     KING=13
     QUEEN=12
@@ -52,7 +52,6 @@ class Card:
         else:
             self.suit = Card.random_suit()
 
-    
 
     def __str__(self):
         return f"{self.rank.name}  {self.suit.name}"

@@ -15,8 +15,8 @@ def main():
 
     # parser = argparse.ArgumentParser(description="")
     # parser.add_argument("")
-    
-    print("Welcome to the Command Line Poker odds calculator\n")
+
+    print("\n\n\tWelcome to the Command Line Poker odds calculator\n")
     
     try: 
         while True:

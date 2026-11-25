@@ -118,7 +118,7 @@ class Player:
 
 class Table:
 
-    def __init__(self, playerHand=None):
+    def __init__(self, playerHand=None, board=None):
 
         self.board : list[Card] = []
         self.opponents : list[Player] = []
@@ -133,11 +133,27 @@ class Table:
                     raise TypeError
 
             self.player = Player(playerHand)
-            deck = Deck(exclude=playerHand)
 
-        else:
-            deck = Deck()
+        if board:
+
+            if len(set(board)) > 5:
+                raise TypeError
+
+            if not isinstance(board, list):
+                raise TypeError
+            
+            for card in board:
+                if not isinstance(card, Card):
+                    raise TypeError
+
+            self.board = set(board) # Removes duplicates by mistake
+
+        
+        deck = Deck(exclude=list(playerHand) + list(board))
+
+        if not playerHand:
             self.player = Player(deck.deal(2))
+
 
     def known_cards(self):
 

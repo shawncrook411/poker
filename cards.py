@@ -129,6 +129,8 @@ class Player:
 
         return str
 
+from evaluations import evaluate
+
 class Table:
 
     board : list[Card] = []
@@ -229,14 +231,16 @@ class Table:
         print(f"\tTable\n" )
 
         print(f"\tPlayer: {Table.player}\n")
+        print(f"\t\tEvaluation: {evaluate(Table.community())[0].label}")
 
         str = "\tBoard:"
         for card in Table.board:
             str += f"{card} "
         print(str + '\n')
 
-        for i, player in enumerate(Table.opponents, 1):
-            print(f"\tOpponent #{i}: {player}")
+        for i, opponent in enumerate(Table.opponents, 1):
+            print(f"\tOpponent #{i}: {opponent}", end='')
+            print(f"\t\tEvaluation: {evaluate(Table.community(opponent))[0].label}")
 
         if not Table.opponents:
             print(f"\tNo Opponents")

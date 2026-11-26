@@ -149,6 +149,9 @@ def get_cards(playerHand=False, board=False, opponents=False):
 
             if board:
                 return cards[:5]
+
+            if opponents:
+                return [Player(cards[:2])]
             
             return cards[:5] # Will only return first 5
         

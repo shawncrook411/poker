@@ -259,8 +259,6 @@ def run_game():
         except TypeError:
             print("Invalid input, please try again")
             continue
-    
-    Table.show()
 
     print("Let the game begin!\n")
 

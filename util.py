@@ -7,151 +7,173 @@ from odds import *
 import itertools
 
 
-def get_cards(num=1, taken=[]):
+def print_input_info():
+    print('\n')
+    print('\t\t***** MANUALLY INPUT CARDS HERE *******\n')
+    print("\tYou must type multiple cards on a line at at time, seperated by spaces")
+    
+    print()
+    print("\tFor the rank, just type the number")
+    print("\tFor royals, please use either 11/12/13/14 OR J/Q/K/A")
+    print()
+    print("\tYou may also use S/C/H/D for the suit or the full name, or the following values")
+    print("\t1: Spade - 2: Club - 3: Heart - 4: Diamond")
+    print()
+    print("\tExample: Ah - Ace of Hearts, 8D - Eight of Diamonds, 121 - Queen of Spades")
+    print("\tExample: Ah Kh Qh")
+    print()
+
+
+def get_cards(playerHand=False, board=False, opponents=False):
     suit = None
     rank = None
 
     cards = []
-    print(f"Please input rank and suit information")
 
-    if num > 1:
-        print("\tYou may type multiple cards on a line at at time, seperated by spaces")
+    assert playerHand or board or opponents
 
-    print()
-    print("For the rank, just type the number")
-    print("\tFor royals, please use either 11/12/13/14 OR J/Q/K/A")
-    print()
-    print("You may also use S/C/H/D for the suit or the full name, or the following values")
-    print("\t1. Spade\t2. Club\t3. Heart\t4. Diamond")
-    print()
-    print("Example: Ah - Ace of Hearts, 8D - Eight of Diamonds, 121 - Queen of Spades")
+    print("********     ", end='')
+    if playerHand:
+        print("INPUT PLAYER HAND: You may leave blank for a random hand, MAX = 2", end='\t')
 
-    while len(cards) < num:
+    if board:
+        print("INPUT COMMUNITY BOARD: You may leave blank for an empty board\n Or type how many cards have been revealed, MAX = 5", end='')
 
-        values = input(f"Card: ").upper().split()
+    if opponents:
+        print("INPUT OPPONENTS: You may leave blank to randomize 5 opponents\n Or you may type one opponents hand, MAX = 2", end='')
+    
+    print("     ********\n")
 
-        for val in values:
-            match val[:-1]:
-                case "1" | "A" | "14":
-                    rank = Rank.ACE
+    while True:
+        values = input(f"Input: ").upper().strip()
 
-                case "J" | "11":
-                    rank = Rank.JACK
-
-                case "Q" | "12":
-                    rank = Rank.QUEEN
-
-                case "K" | "13":
-                    rank = Rank.KING
-
-                case _:
-                    try:
-                        rank = Rank(int(val[:-1]))
-
-                    except ValueError, KeyError:
-                        print("Invalid rank inputted, please try again")
-                        continue
-
-            match val[-1]:
-                case "1" | "S":
-                    suit = Suit.SPADE
-
-                case "2" | "C":
-                    suit = Suit.CLUB
-
-                case "3" | "H":
-                    suit = Suit.HEART
-
-                case "4" | "D":
-                    suit = Suit.DIAMOND
-
-                case _:
-                    print("Invalid suit inputted, please try again")
-                    continue
-
-            card = Card(rank=rank, suit=suit)
-
-            if card in cards or card in taken:
-                print("Duplicated card inputted, please try again")
-                continue
-
-            cards.append(card)
-            print(f'Card added: {card}')
-
-            if len(cards) >= num:
+        try : 
+            if playerHand and values == "":
+                print("Randomizing player hand")
+                cards = Table.deal(2)
+                str = "Player Hand: " 
+                for card in cards:
+                    str += f"{card} "
+                print(str + '\n')
                 return cards
 
-    return cards
+            if board and values == "":
+                print("Community board is set to empty\n")
+                return []
+
+            try:
+                num = int(values)
+
+                if board and num in range(6):
+                    print(f"Randomizing {num} community cards")
+
+                    dealt = Table.deal(num)
+                    str = "Board: " 
+                    for card in dealt:
+                        str += f"{card} "
+                    print(str + '\n')
+                    return dealt
+                
+            except ValueError, TypeError:
+                pass
+
+            if opponents and values == "":
+                print(f"Randomizing 5 opponent hands")
+
+                opps = []
+
+                for i in range(5):
+                    cards = Table.deal(2)
+                    str = f"Opponent #{i+1} :"
+                    for card in cards:
+                        str += f"{card} "
+                    print(str)
+
+                    opps.append(Player(cards))
+
+                return opps
+
+            values = values.split(' ')
+
+            for val in values:
+                match val[:-1]:
+                    case "1" | "A" | "14":
+                        rank = Rank.ACE
+
+                    case "J" | "11":
+                        rank = Rank.JACK
+
+                    case "Q" | "12":
+                        rank = Rank.QUEEN
+
+                    case "K" | "13":
+                        rank = Rank.KING
+
+                    case _:
+                        try:
+                            rank = Rank(int(val[:-1]))
+
+                        except ValueError, KeyError:
+                            print("Invalid rank inputted, please try again")
+                            raise ValueError
+
+                match val[-1]:
+                    case "1" | "S":
+                        suit = Suit.SPADE
+
+                    case "2" | "C":
+                        suit = Suit.CLUB
+
+                    case "3" | "H":
+                        suit = Suit.HEART
+
+                    case "4" | "D":
+                        suit = Suit.DIAMOND
+
+                    case _:
+                        print("Invalid suit inputted, please try again")
+                        raise ValueError
+
+                card = Card(rank=rank, suit=suit)
+
+                if card in cards or card in Table.known_cards():
+                    print("Duplicated card inputted, please try again")
+                    raise ValueError
+
+                cards.append(card)
+                print(f'Card added: {card}')
+
+            print('\n')
+            if playerHand:
+                return cards[:2]
+
+            if board:
+                return cards[:5]
             
-def get_hand(num=2):
-
-    while True:
-        print("Is this a random hand, or would you like to input one?")
-        print("\t1. Random")
-        print("\t2. Input")
-        val = int(input("Option: "))
-
-        if val in [1,2]:
-            break
-
-        print("Invalid option selected, please try again")
-
-    if val == 1:
-        deck = Deck()
-        return deck.deal(num)
-
-    if val == 2:
-        print(f"\n\n\nPlease type the player hand")
-        return get_cards(num=num)
-
-    
-
-def get_board(taken=[]):
-
-    print("Would you like to calculate this from Pre-Flop, Flop, Turn, or after the River?")
-    print("\t1. Pre-Flop [0 cards dealt, 5 remaining]")
-    print("\t2. Flop     [3 cards dealt, 2 remaining]")
-    print("\t3. Turn     [4 cards dealt, 1 remaining]")
-    print("\t4. River    [All 5 cards dealt]")
-
-    while True:
-
-        try:
-            val = int(input("Option: "))
+            return cards[:5] # Will only return first 5
+        
         except ValueError:
-            print('Invalid input, please try again')
             continue
-
-        if val in [1,2,3,4]:
-            break
-
-        print("Invalid option selected, please try again")
-
-
-
-    if val == 1:
-        return []
-
-    print("Please input the community cards")
-
-    return get_cards(num= val+1, taken=taken)
-
-
 
 def print_menu():
 
-    while True:
-        print("Menu\n")
-        print("\t1. Get odds of making a certain combination")
-        print("\t2. Get odds of beating another hand")
-        print("\t3. Outs calculator")
-        print("\t4. Run simulated game")
-        print("\t0. Quit")
-        val = input("Option: ")
+    print("Menu\n")
+    print("\t1. Get odds of making a certain combination")
+    print("\t2. Get odds of beating another hand")
+    print("\t3. Outs calculator")
+    print("\t4. Run simulated game")
+    print("\t5. Show random board")
+    print("\t0. Quit")
+    print()
+     
+    val = int(input("Option: ")[0])
 
+    if val in [1,2,3,4]:
+        print_input_info()
 
-        if int(val) in [1,2,3,4,0]:
-            return int(val)
+    return val
 
-        print("Invalid option selected, please try again")
-
+def display_random():
+    Table.random()
+    Table.show()
+    pass

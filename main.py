@@ -1,4 +1,4 @@
-import sys
+import time
 import argparse
 
 from itertools import combinations
@@ -10,16 +10,14 @@ from util import *
 
 import itertools
 
-
 def main():
-
-    # parser = argparse.ArgumentParser(description="")
-    # parser.add_argument("")
 
     print("\n\n\tWelcome to the Command Line Poker odds calculator\n")
     
-    try: 
-        while True:
+    while True:    
+        try: 
+            Table.clear()
+
             match int(print_menu()):
                 case 1:
                     odds_make_combo()
@@ -29,12 +27,26 @@ def main():
                     outs_calculator()
                 case 4:
                     run_game()
+                case 5:
+                    display_random()
                 case 0:
                     break
+                case _:
+                    print("Invalid option selected, please try again")
 
-    except (KeyboardInterrupt, EOFError):
-        print()
 
+        except (KeyboardInterrupt, EOFError):
+            break
+
+        except ValueError:
+            print("Something went wrong, please try again")
+            continue
+
+        time.sleep(5)
+        print('\n\n')
+
+    print("Thank you! Have a good day :)")
+    return
 
 if __name__ == "__main__":
     main()

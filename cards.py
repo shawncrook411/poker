@@ -1,11 +1,22 @@
+
 from enum import IntEnum
 import random
+from functools import wraps
 
 class Suit(IntEnum):
     SPADE=0
     CLUB=1
     HEART=2
     DIAMOND=3
+
+    def __str__(self):
+        return {
+            Suit.SPADE: "♠",
+            Suit.CLUB: "♣",
+            Suit.HEART: "♥",
+            Suit.DIAMOND: "♦",
+        }[self]
+
 
 class Rank(IntEnum):
     ACE=14
@@ -22,7 +33,17 @@ class Rank(IntEnum):
     THREE=3
     TWO=2
 
-
+    def __str__(self):
+        if self < 10:
+            return str(int(self))
+        
+        return {
+            Rank.ACE: "A",
+            Rank.KING: "K",
+            Rank.QUEEN: "Q",
+            Rank.JACK: "J",
+            Rank.TEN: "T"
+        }[self]
 
 class Card:
 
@@ -30,31 +51,20 @@ class Card:
     rank : Rank
 
     @staticmethod
-    def random_rank():
-        return random.choice(list(Rank))
-
-    @staticmethod
-    def random_suit():
-        return random.choice(list(Suit))
-
-    @staticmethod
     def sort(cards: list[Card]):
         return sorted(cards, reverse=True)
     
     def __init__(self, rank=None, suit=None):
-        if rank:
+        if rank is not None and suit is not None:
             self.rank = rank
-        else:
-            self.rank = Card.random_rank()
-
-        if suit:
             self.suit = suit
         else:
-            self.suit = Card.random_suit()
-
-
+            self.rank = random.choice(list(Rank))
+            self.suit = random.choice(list(Suit))
+            
     def __str__(self):
-        return f"{self.rank.name}  {self.suit.name}"
+        color = "31" if self.suit in (Suit.HEART, Suit.DIAMOND) else "30"   # red / black text
+        return f"\033[{color};107m {str(self.rank):>2}{self.suit} \033[0m"
 
     def __eq__(self, other: Card):
         return self.rank.value == other.rank.value and self.suit == other.suit
@@ -67,11 +77,12 @@ class Card:
 
     def __hash__(self):
         return hash((self.rank, self.suit))
-
-    
+   
 class Deck:
 
-    def __init__(self, shuffle=True, exclude: list[Card] = [] ):
+    def __init__(self, shuffle=True, exclude=None):
+        exclude = set(exclude or [])
+
         self.cards = []
 
         for rank in Rank:
@@ -103,10 +114,12 @@ class Deck:
     def __len__(self):
         return len(self.cards)
 
+    def __contains__(self, item):
+        return item in self.cards
 
 class Player:
-    def __init__(self, hand):
-        self.hand : list[Card] = hand
+    def __init__(self, hand=None):
+        self.hand : list[Card] = hand or []
 
     def __str__(self):
         str = ""
@@ -118,82 +131,146 @@ class Player:
 
 class Table:
 
-    def __init__(self, playerHand=None, board=None):
+    board : list[Card] = []
+    player : Player = None
+    opponents : list[Player] = []
+    deck : Deck = None
+    burned : list[Card] = []
 
-        self.board : list[Card] = []
-        self.opponents : list[Player] = []
+    @staticmethod
+    def add_player_hand(hand):
 
-        if playerHand:
+        if len(set(hand)) != 2:
+            raise TypeError
 
-            if len(set(playerHand)) != 2:
+        for card in hand:
+            if not isinstance(card, Card):
                 raise TypeError
 
-            for card in playerHand:
-                if not isinstance(card, Card):
-                    raise TypeError
+        Table.player = Player(hand)
+        Table.claim(hand)
 
-            self.player = Player(playerHand)
 
-        if board:
+    @staticmethod
+    def community(current : Player = None):
 
-            if len(set(board)) > 5:
-                raise TypeError
+        if not current:
+            return Table.player.hand + Table.board
 
-            if not isinstance(board, list):
+        return current.hand + Table.board
+
+    @staticmethod
+    def add_opponents(opponents : list[Player]):
+
+        Table.opponents = []
+
+        for player in opponents:
+
+            if len(set(player.hand)) != 2:
                 raise TypeError
             
-            for card in board:
+            for card in player.hand:
                 if not isinstance(card, Card):
                     raise TypeError
 
-            self.board = set(board) # Removes duplicates by mistake
+            Table.opponents.append(player)
 
+            Table.claim(player.hand)
+
+    @staticmethod
+    def set_board(board):
+
+        if len(set(board)) > 5:
+            raise TypeError
+
+        if not isinstance(board, list):
+            raise TypeError
         
-        deck = Deck(exclude=list(playerHand) + list(board))
+        for card in board:
+            if not isinstance(card, Card):
+                raise TypeError
 
-        if not playerHand:
-            self.player = Player(deck.deal(2))
+        Table.board = list(set(board)) # Removes duplicates by mistake
+        Table.claim(board)
 
+    
+    @staticmethod
+    def board_cards():
+        return Table.board
 
-    def known_cards(self):
+    @staticmethod
+    def known_cards():
 
-        cards = self.player.hand + list(self.board)
+        cards = Table.player.hand + Table.board + Table.burned
 
-        for player in self.opponents:
+        for player in Table.opponents:
             for card in player.hand:
                 cards.append(card)
 
         return cards
+            
+    @staticmethod
+    def remaining():
+        return Table.deck
 
-    def remaining(self):
-        return Deck(exclude=self.known_cards())
+    @staticmethod
+    def deal(n=2):
+        return Table.deck.deal(n)
 
-    def show(self):
+    @staticmethod
+    def claim(cards: list[Card]):
+        for c in cards:
+            if c in Table.deck:
+                Table.deck.cards.remove(c)
+
+
+    @staticmethod
+    def show():
         print(f"\tTable\n" )
 
-        print(f"\tPlayer: {self.player}\n")
+        print(f"\tPlayer: {Table.player}\n")
 
-        print(f"\tBoard:  {self.board}\n")
+        str = "\tBoard:"
+        for card in Table.board:
+            str += f"{card} "
+        print(str + '\n')
 
-        for i, hand in enumerate(self.opponents, 1):
-            print(f"\tOpponent #{i}: {hand}")
+        for i, player in enumerate(Table.opponents, 1):
+            print(f"\tOpponent #{i}: {player}")
 
-        if not self.opponents:
+        if not Table.opponents:
             print(f"\tNo Opponents")
 
-        print(f"Unseen cards: {len(self.remaining())}")
+        print(f"\tUnseen cards: {len(Table.remaining())}")
+
+    @staticmethod
+    def random():
+
+        Table.deck = Deck()
+
+        Table.add_player_hand(
+            Table.deal()
+        )
+
+        Table.set_board(
+            Table.deal(5)
+        )
+
+        Table.add_opponents([Player(Table.deal()) for _ in range(5)])
+
+    @staticmethod
+    def clear():
+
+        Table.player = Player()
+        Table.board = []
+        Table.opponents = []
+        Table.deck = Deck()
+
 
         
-        
-       
+    
 def main():
-
-    table = Table()
-
-    table.show()
-
-    for c in table.known_cards():
-        print(c)
+    pass
 
 if __name__ == "__main__":
     main()

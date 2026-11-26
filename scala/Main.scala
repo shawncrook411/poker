@@ -14,6 +14,7 @@
                 case 3 => println("outs calculator")
                 case 4 => println("run game")
                 case 5 => println("display random")
+                case 9 => testing()
                 case 0 => running = false
                 case _ => println("Invalid option selected, please try again")
             }
@@ -28,5 +29,19 @@
                 println("Something went wrong, please try again")
                 running = false
         }
+    }
+}
+
+def testing(): Unit = {
+    val deck = Deck()
+
+    for (i <- 1 to 5) {
+        val cards = deck.deal(i)
+
+        for (card <- cards) {
+            println(card)
+        }
+
+        println("\n")    
     }
 }

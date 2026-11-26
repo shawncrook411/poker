@@ -1,5 +1,7 @@
+import scala.collection.mutable.ArrayBuffer
+import scala.util.Random
 
-object Suit {
+object Suit extends Enumeration {
     val SPADE = 0
     val CLUB = 1
     val HEART = 2
@@ -17,7 +19,7 @@ object Suit {
     }
 }
 
-object Rank {
+object Rank extends Enumeration {
     val ACE=14
     val KING=13
     val QUEEN=12
@@ -32,6 +34,11 @@ object Rank {
     val THREE=3
     val TWO=2
 
+    val all = List(ACE, KING, QUEEN, 
+        JACK, TEN, NINE, EIGHT, SEVEN, 
+        SIX, FIVE, FOUR, THREE, TWO
+    )
+
     def str(rank: Int): String = {
         rank match {
             case 14 | 1 => "A"
@@ -42,4 +49,47 @@ object Rank {
             case other => other.toString
         }
     }
+}
+
+case class Card(rank: Int, suit: Int) {
+
+    override def toString: String = {
+        val color = if (suit == Suit.HEART || suit == Suit.DIAMOND) "31" else "30"
+        val rankText = Rank.str(rank)
+        "\u001b[" + color + ";107m " + f"$rankText%2s" + Suit.str(suit) + " \u001b[0m"
+    }
+
+    def sort(cards: List[Card]) : List[Card] = {
+        cards.sortBy(c => c.rank).reverse
+    }
+}
+
+class Deck() {
+
+    var cards = ArrayBuffer[Card]()
+
+    for (rank <- Rank.all) {
+        for (suit <- Suit.all) {
+            cards += Card(rank, suit)
+        }
+    }
+
+    def shuffle(): Unit = {
+        cards = Random.shuffle(cards)
+    }
+
+    def deal(n: Int): List[Card] = {
+        val dealt = Random.shuffle(cards.toList).take(n)
+
+        for (c <- dealt) {
+            cards -= c
+        }
+
+        return dealt
+    }
+
+    def length: Int = cards.length
+
+    def contains(card: Card): Boolean = cards.contains(card)
+
 }

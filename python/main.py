@@ -4,9 +4,9 @@ import argparse
 from itertools import combinations
 from math import comb
 
-from cards import *
-from odds import *
-from util import *
+from python.cards import *
+from python.odds import *
+from python.util import *
 
 import itertools
 

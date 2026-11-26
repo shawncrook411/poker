@@ -1,2 +1,6 @@
 __pycache__/
 python/__pycache__/
+.bsp
+.metals
+.scala-build
+.vscode

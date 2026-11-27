@@ -9,11 +9,11 @@
             // Table.clear()
 
             printMenu() match {
-                case 1 => println("odds make combo")
-                case 2 => println("odds beat other")
-                case 3 => println("outs calculator")
-                case 4 => println("run game")
-                case 5 => println("display random")
+                case 1 => odds_make_combo()
+                case 2 => odds_beat_other()
+                case 3 => outs_calculator()
+                case 4 => run_game()
+                case 5 => display_random()
                 case 9 => testing()
                 case 0 => running = false
                 case _ => println("Invalid option selected, please try again")

@@ -1,5 +1,9 @@
 import scala.io.StdIn
 
+def print_input_info() : Unit = {}
+
+def get_cards(playerHand: Boolean = false, board: Boolean = false, opponents : Boolean = false) : List[Card] = { List() }
+
 def printMenu() : Int = {
     println("Menu\n")
     println("\t1. Get odds of making a certain combination")
@@ -26,3 +30,5 @@ def printMenu() : Int = {
 
     return option
 }
+
+def display_random() : Unit = {}

@@ -93,3 +93,48 @@ class Deck() {
     def contains(card: Card): Boolean = cards.contains(card)
 
 }
+
+class Player(var hand: List[Card] = List()) {
+
+    override def toString: String = {
+        var str = ""
+
+        for (c <- hand) {
+            str += s"$c "
+        }
+
+        return str
+    }
+}
+
+object Table {
+
+    var board: List[Card] = List()
+    var player: Player = null
+    var opponents: List[Player] = List()
+    var deck: Deck = null
+
+    def add_player_hand(hand: List[Card]) : Unit = {}
+
+    def community(current: Player = null): List[Card] = { List() }
+
+    def add_opponents(new_opponents: List[Player]): Unit = {}
+
+    def set_board(new_board: List[Card]) : Unit = {}
+
+    def board_cards() : List[Card] = { List() }
+
+    def known_cards() : List[Card] = { List() }
+
+    def remaining(): Deck = deck
+
+    def deal(n: Int = 2): List[Card] = { List() }
+
+    def claim(cards: List[Card]): Unit = {}
+
+    def show(): Unit = {}
+
+    def random() : Unit = {}
+
+    def clear() : Unit = {}
+}

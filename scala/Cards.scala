@@ -2,6 +2,8 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 object Suit extends Enumeration {
+    type Suit = Value
+
     val SPADE = 0
     val CLUB = 1
     val HEART = 2
@@ -20,6 +22,8 @@ object Suit extends Enumeration {
 }
 
 object Rank extends Enumeration {
+    type Rank = Value
+
     val ACE=14
     val KING=13
     val QUEEN=12
@@ -79,6 +83,7 @@ class Deck() {
     }
 
     def deal(n: Int): List[Card] = {
+        print("dealing......")
         val dealt = Random.shuffle(cards.toList).take(n)
 
         for (c <- dealt) {
@@ -112,29 +117,125 @@ object Table {
     var board: List[Card] = List()
     var player: Player = null
     var opponents: List[Player] = List()
-    var deck: Deck = null
+    var deck: Deck = Deck()
 
-    def add_player_hand(hand: List[Card]) : Unit = {}
+    def add_player_hand(hand: List[Card]) : Unit = {
+        if (hand.toSet.size != 2) {
+            throw new IllegalArgumentException()
+        }
 
-    def community(current: Player = null): List[Card] = { List() }
+        player = new Player(hand)
+        claim(hand)
+    }
 
-    def add_opponents(new_opponents: List[Player]): Unit = {}
+    def community(current: Player = null): List[Card] = {
+        if (current == null) {
+            return player.hand ++ board
+        } else {
+            return current.hand ++ board
+        }
+    }
 
-    def set_board(new_board: List[Card]) : Unit = {}
+    def add_opponents(new_opponents: List[Player]): Unit = {
+        opponents = List()
 
-    def board_cards() : List[Card] = { List() }
+        for (p <- new_opponents) {
+            if (p.hand.toSet.size != 2) {
+                throw new IllegalArgumentException()
+            }
 
-    def known_cards() : List[Card] = { List() }
+            opponents = opponents :+ p
+            claim(p.hand)
+        }
+    }
+
+    def set_board(new_board: List[Card]) : Unit = {
+        if (new_board.toSet.size > 5) {
+            throw new IllegalArgumentException()
+        }
+
+        board = new_board.distinct
+        claim(board)
+    }
+
+    def board_cards() : List[Card] = {
+        return board
+    }
+
+    def known_cards() : List[Card] = { 
+        var cards = player.hand ++ board
+
+        for (player <- opponents) {
+            for (card <- player.hand) {
+                cards = cards :+ card
+            }
+        }
+
+        return cards
+    }
 
     def remaining(): Deck = deck
 
-    def deal(n: Int = 2): List[Card] = { List() }
+    def deal(n: Int = 2): List[Card] = {
+        return deck.deal(n)
+    }
 
-    def claim(cards: List[Card]): Unit = {}
+    def claim(cards: List[Card]): Unit = {
+        for (card <- cards) {
+            if (deck.contains(card)) {
+                deck.cards -= card
+            }
+        }
+    }
 
-    def show(): Unit = {}
+    def show(): Unit = {
+        println("\tTable\n")
 
-    def random() : Unit = {}
+        println(s"\tPlayer: ${player}\n")
+        println(s"\t\tEvaluation: ${HAND_LABELS(evaluate(community()).handType)}")
 
-    def clear() : Unit = {}
+        var str = "\tBoard: "
+        for (card <- board) {
+            str += s"$card "
+        }
+        println(str + '\n')
+
+        var i = 0
+        for (opponent <- opponents) {
+            print(s"\tOpponent #$i: $opponent")
+            print(s"\t\tEvaluation: ${HAND_LABELS(evaluate(community(opponent)).handType)}")
+            i += 1
+        }
+
+        if (opponents.length == 0) {
+            println("\t No Opponents")
+        }
+
+        println(s"\tUnseen cards: ${remaining().length}")
+
+    }
+
+    def random() : Unit = {
+
+        deck = Deck()
+
+        add_player_hand(deal())
+
+        set_board(deal(5))
+
+        var opponents = List[Player]()
+
+        for (i <- 1 to 5) {
+            opponents = opponents :+ new Player(deal())
+        }
+
+        add_opponents(opponents)
+    }
+
+    def clear() : Unit = {
+        player = new Player()
+        board = List()
+        opponents = List()
+        deck = new Deck()
+    }
 }

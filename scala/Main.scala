@@ -6,7 +6,7 @@
     
     while (running) {
         try {
-            // Table.clear()
+            Table.clear()
 
             printMenu() match {
                 case 1 => odds_make_combo()

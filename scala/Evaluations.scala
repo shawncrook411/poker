@@ -8,7 +8,6 @@ object  HandType extends Enumeration {
     val TWO_PAIR = 2
     val PAIR = 1
     val HIGH = 0
-
 }
 
 val HAND_LABELS = List(
@@ -42,23 +41,11 @@ case class HandResult(handType: Int, tiebreak: List[Int]) {
 
         tiebreak.length - other.tiebreak.length
     }
-}
 
-def get_groups(cards: List[Card]) : (List[Int], List[Int])  = { 
-    val counts = scala.collection.mutable.Map[Int, Int]()
-
-    for (card <- cards) {
-        counts(card.rank) = counts.getOrElse(card.rank, 0) + 1
+    override def toString(): String = {
+        HAND_LABELS(handType)
     }
-
-    val groups = counts.toList.sortBy(group => (group._2, group._1)).reverse
-
-    val ranks = groups.map(group => group._1)
-    val kinds = groups.map(group => group._2)
-    
-    return (ranks, kinds)
 }
-
 
 def is_straight_flush(cards: List[Card]): Option[List[Int]] = { 
     var result : Option[List[Int]] = None
@@ -114,39 +101,40 @@ def is_flush(cards: List[Card]): Option[List[Int]] = {
     return result
 }
 
-def is_four_kind(cards: List[Card]): Option[List[Int]] = { 
-    val (ranks, kinds) = get_groups(cards)
 
-    if (kinds(0) == 4) { 
-        return Some(List(ranks(0), ranks.drop(1).max))   
+def evaluate(cards: List[Card]): HandResult = {
+    val counts = scala.collection.mutable.Map[Int, Int]()
+
+    for (card <- cards) {
+        counts(card.rank) = counts.getOrElse(card.rank, 0) + 1
     }
 
-    return None
-}
+    val groups = counts.toList.sortBy(group => (group._2, group._1)).reverse
 
-def is_full_house(cards: List[Card]): Option[List[Int]] = { 
-    val (ranks, kinds) = get_groups(cards)
+    val ranks = groups.map(group => group._1)
+    val kinds = groups.map(group => group._2)
 
-    if (kinds(0) == 3 && kinds(1) >= 2) { 
-        return Some(List(ranks(0), ranks(1)))
+    val straight_flush = is_straight_flush(cards)
+    val flush = is_flush(cards)
+    val straight = is_straight(cards)
+
+    kinds match {
+        case _ if straight_flush.isDefined => HandResult(HandType.STRAIGHT_FLUSH, straight_flush.get)
+
+        case 4 :: _ => HandResult(HandType.FOUR_KIND, ranks.take(1) ++ ranks.drop(1).sorted.reverse.take(1))
+
+        case 3 :: n :: _ if n >= 2 => HandResult(HandType.FULL_HOUSE, ranks.take(2)) // We do n >= 2 in case we pass 7 cards and there are 2 sets of 3, rare but happens
+
+        case _ if flush.isDefined => HandResult(HandType.FLUSH, flush.get)
+
+        case _ if straight.isDefined => HandResult(HandType.STRAIGHT, straight.get)
+
+        case 3 :: _ => HandResult(HandType.THREE_KIND, ranks.take(3))
+
+        case 2 :: 2 :: _ => HandResult(HandType.TWO_PAIR, ranks.take(2) ++ ranks.drop(2).sorted.reverse.take(1))
+
+        case 2 :: _  => HandResult(HandType.PAIR, ranks.take(4))
+
+        case _ => HandResult(HandType.HIGH, ranks.take(5))
     }
-
-    return None
 }
-
-def is_three_kind(cards: List[Card]): Option[List[Int]] = { 
-    val (ranks, kinds) = get_groups(cards)
-
-    if (kinds(0) == 3) { 
-        return Some(ranks.take(3))
-    }
-
-    return None
-
-}
-
-def is_two_pair(cards: List[Card]): Option[List[Int]] = { None }
-
-def is_pair(cards: List[Card]): Option[List[Int]] = { None }
-
-def evaluate(cards: List[Card]): (HandType.Value, List[Card]) = { (HandType(1), List()) }

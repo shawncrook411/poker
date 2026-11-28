@@ -33,15 +33,21 @@
 }
 
 def testing(): Unit = {
-    val deck = Deck()
 
-    for (i <- 1 to 5) {
-        val cards = deck.deal(i)
+    var continue = true
 
-        for (card <- cards) {
-            println(card)
+    while (continue) {
+        val deck = Deck()
+        val cards = deck.deal(7)
+
+        val result = evaluate(cards)
+
+
+        if (result.handType == HandType.STRAIGHT_FLUSH) {
+            println(result)
+            println(cards)
+
+            continue = false
         }
-
-        println("\n")    
     }
 }
